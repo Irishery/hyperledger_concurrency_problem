@@ -1,0 +1,6 @@
+make --dry-run --always-make --keep-going --print-directory
+make: Entering directory '/home/kir/hyperledger/fabric/fabric-samples/asset-transfer-basic/chaincode-go'
+make: Leaving directory '/home/kir/hyperledger/fabric/fabric-samples/asset-transfer-basic/chaincode-go'
+ 
+make: *** No targets specified and no makefile found.  Stop.
+
