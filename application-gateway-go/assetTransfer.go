@@ -40,9 +40,6 @@ type Asset struct {
 	Count int    `json:"Count"`
 }
 
-var now = time.Now()
-var assetId = fmt.Sprintf("asset%d", now.Unix()*1e3+int64(now.Nanosecond())/1e6)
-
 func main() {
 	log.Println("============ application-golang starts ============")
 
@@ -78,22 +75,14 @@ func main() {
 	fmt.Println("getAllAssets:")
 	getAllAssets(contract)
 
-	// fmt.Println("updateCount:")
-	// updateCount(contract)
+	fmt.Println("updateCount:")
+	updateCounter(contract)
 
-	fmt.Println("createAsset:")
-	// createAsset(contract)
-	for i := 0; i < 10; i++ {
-		go updateCount(contract)
-		go updateCount(contract)
-		time.Sleep(3 * time.Second)
-	}
-	// time.Sleep(5 * time.Second)
-
-	// time.Sleep(30 * time.Second)
-
-	// fmt.Println("readAssetByID:")
-	// readAssetByID(contract)
+	// for i := 0; i < 10; i++ {
+	// 	go updateCount(contract)
+	// 	go updateCount(contract)
+	// 	time.Sleep(3 * time.Second)
+	// }
 
 	log.Println("============ application-golang ends ============")
 }
@@ -193,48 +182,38 @@ func getAllAssets(contract *client.Contract) {
 	fmt.Printf("*** Result:%s\n", result)
 }
 
-// Submit a transaction synchronously, blocking until it has been committed to the ledger.
-func createAsset(contract *client.Contract, count int) {
-	fmt.Printf("Submit Transaction: CreateAsset, creates new asset with ID, Count arguments \n")
+func updateCounter(contract *client.Contract) {
+	// var structed_asset Asset
 
-	_, err := contract.SubmitTransaction("CreateAsset", strconv.FormatInt(time.Now().UTC().UnixNano(), 10), strconv.Itoa(count))
+	counter_asset := readAssetByID(contract, "counter")
+
+	_, err := contract.SubmitTransaction("UpdateAsset", "counter", strconv.Itoa(counter_asset.Count+1))
 	if err != nil {
 		panic(fmt.Errorf("failed to submit transaction: %w", err))
 	}
 
-	fmt.Printf("*** Transaction committed successfully\n")
-}
-
-func updateCount(contract *client.Contract) {
-	var structed_asset Asset
-
-	last_asset, err := contract.SubmitTransaction("GetLastAsset")
-	if err != nil {
-		panic(fmt.Errorf("failed to submit transaction: %w", err))
-	}
-
-	err = json.Unmarshal(last_asset, &structed_asset)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	createAsset(contract, structed_asset.Count+1)
-
-	fmt.Print("Strct type ", structed_asset.Count, "\n")
+	fmt.Print("Strct type ", counter_asset.Count+1, "\n")
 	fmt.Printf("*** Transaction committed successfully\n")
 }
 
 // Evaluate a transaction by assetID to query ledger state.
-func readAssetByID(contract *client.Contract) {
+func readAssetByID(contract *client.Contract, id string) *Asset {
 	fmt.Printf("Evaluate Transaction: ReadAsset, function returns asset attributes\n")
+	var structed_asset *Asset
 
-	evaluateResult, err := contract.EvaluateTransaction("ReadAsset", assetId)
+	evaluateResult, err := contract.EvaluateTransaction("ReadAsset", id)
 	if err != nil {
 		panic(fmt.Errorf("failed to evaluate transaction: %w", err))
 	}
 	result := formatJSON(evaluateResult)
 
+	err = json.Unmarshal(evaluateResult, &structed_asset)
+	if err != nil {
+		log.Fatalln(err)
+	}
 	fmt.Printf("*** Result:%s\n", result)
+
+	return structed_asset
 }
 
 //Format JSON data
